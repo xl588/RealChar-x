@@ -38,23 +38,22 @@ load_dotenv()
 #            if by_phone==False and response_txt_last != response_txt_2last:
 #                return True
 
-global last_msg
-last_msg = "hello"
-
-def is_last_message(last_msg):
+def is_last_message(last_time):
     url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
     
     data = requests.request("GET", url, headers={}, data = {})
     not_by_phone = data.json()[0]["sendByApi"]
+    data_time = data.json()[0]["timestamp"]
     response_txt_last = data.json()[0]['textMessage']
-    if not_by_phone==False and response_txt_last != last_msg:
-        last_msg = response_txt_last
+    if not_by_phone==False and data_time > last_time:
+        last_time = time.time()
         return True
     else:
         return False
 
 async def last_message():
-    while not is_last_message(last_msg):
+    last_time = time.time()
+    while not is_last_message(last_time):
         await asyncio.sleep(2)
 
 async def handle_text(websocket):
@@ -89,6 +88,7 @@ async def receive_message(websocket):
         if isinstance(message, str):
             if message == '[end]\n' or re.search(r'\[end=([a-zA-Z0-9]+)\]', message):
                 greenAPI.sending.sendMessage('3476754292@c.us', to_user)
+                to_user = ""
                 break
             elif message == '[thinking]\n':
                 # skip thinking message
@@ -109,7 +109,7 @@ async def receive_message(websocket):
         print("continue receiving")
 
 async def start_client(session_id, url):
-    api_key = os.getenv('AUTH_API_KEY')
+    api_key = os.getenv('OPENAI_API_KEY')
     llm_model = 'gpt-3.5-turbo-16k'  # Set the language model to gpt-3.5-turbo-16k
     uri = f"ws://{url}/ws/{session_id}?api_key={api_key}&llm_model={llm_model}"
     async with websockets.connect(uri) as websocket:
