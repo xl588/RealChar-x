@@ -27,25 +27,46 @@ greenAPI = API.GreenApi(idInstance, apiTokenInstance)
 # load environment variables
 load_dotenv()
 
+#async def last_message():
+#    async with aiohttp.ClientSession() as session:
+#        url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
+#        async with session.get(url) as response:
+#            data = await response.json()
+#            by_phone = data[0]["sendByApi"]
+#            response_txt_last = data[0]['textMessage']
+#            response_txt_2last = data[1]['textMessage']
+#            if by_phone==False and response_txt_last != response_txt_2last:
+#                return True
+
+global last_msg
+last_msg = "hello"
+
+def is_last_message(last_msg):
+    url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
+    
+    data = requests.request("GET", url, headers={}, data = {})
+    not_by_phone = data.json()[0]["sendByApi"]
+    response_txt_last = data.json()[0]['textMessage']
+    if not_by_phone==False and response_txt_last != last_msg:
+        last_msg = response_txt_last
+        return True
+    else:
+        return False
+
 async def last_message():
-    async with aiohttp.ClientSession() as session:
-        url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
-        async with session.get(url) as response:
-            data = await response.json()
-            by_phone = data[0]["sendByApi"]
-            response_txt_last = data[0]['textMessage']
-            response_txt_2last = data[1]['textMessage']
-            if by_phone==False and response_txt_last != response_txt_2last:
-                return True
+    while not is_last_message(last_msg):
+        await asyncio.sleep(2)
 
 async def handle_text(websocket):
     while True:
 
-        message = await last_message()
+        await last_message()
 
         url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
         response = requests.request("GET", url, headers={}, data = {})
         response_txt = response.json()[0]['textMessage']
+
+        print(response_txt)
 
         await websocket.send(response_txt)
         print("sent to websocket")
