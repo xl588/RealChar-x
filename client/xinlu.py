@@ -27,19 +27,34 @@ greenAPI = API.GreenApi(idInstance, apiTokenInstance)
 # load environment variables
 load_dotenv()
 
+async def last_message():
+    async with aiohttp.ClientSession() as session:
+        url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
+        async with session.get(url) as response:
+            data = await response.json()
+            by_phone = data[0]["sendByApi"]
+            response_txt_last = data[0]['textMessage']
+            response_txt_2last = data[1]['textMessage']
+            if by_phone==False and response_txt_last != response_txt_2last:
+                return True
+
 async def handle_text(websocket):
     while True:
+
+        message = await last_message()
+
         url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response_json = await response.json()
-                response_txt = response_json[0]['textMessage']
-                print(response_txt)
-                await websocket.send(response_txt)
+        response = requests.request("GET", url, headers={}, data = {})
+        response_txt = response.json()[0]['textMessage']
+
+        await websocket.send(response_txt)
+        print("sent to websocket")
+
 
 # model response handler
 async def receive_message(websocket):
     to_user = ""
+    print("at receiving_messag task")
     while True:
         try: 
             message = await websocket.recv()
@@ -69,6 +84,8 @@ async def receive_message(websocket):
         else:
             print("Unexpected message")
             break
+        
+        print("continue receiving")
 
 async def start_client(session_id, url):
     api_key = os.getenv('AUTH_API_KEY')
@@ -79,9 +96,11 @@ async def start_client(session_id, url):
         await websocket.send('terminal')
         print(f"Client #{session_id} connected to server")
         welcome_message = await websocket.recv()
+        print("welcome_message send")
         # set the character to Mask
         character = "1"
         await websocket.send(character)
+        print("character send")
         
         send_task = asyncio.create_task(handle_text(websocket))
         receive_task = asyncio.create_task(receive_message(websocket))
