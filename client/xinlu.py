@@ -17,11 +17,11 @@ from dotenv import load_dotenv
 from whatsapp_api_client_python import API
 
 # Initialize the GreenAPI client
-global idInstancd
+#global idInstancd
 idInstance = "7103869864"
-global apiTokenInstance
+#global apiTokenInstance
 apiTokenInstance = "c079e284d8724fff973f8c7023f9efc360810d551ad6480c8a"
-global greenAPI
+#global greenAPI
 greenAPI = API.GreenApi(idInstance, apiTokenInstance)
 
 # load environment variables
@@ -111,7 +111,7 @@ async def receive_message(websocket):
 async def start_client(session_id, url):
     api_key = os.getenv('OPENAI_API_KEY')
     llm_model = 'gpt-3.5-turbo-16k'  # Set the language model to gpt-3.5-turbo-16k
-    uri = f"ws://{url}/ws/{session_id}?api_key={api_key}&llm_model={llm_model}"
+    uri = f"ws://{url}/ws/{session_id}?api_key=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&llm_model={llm_model}"
     async with websockets.connect(uri) as websocket:
         # send client platform info
         await websocket.send('terminal')

@@ -183,7 +183,7 @@ def select_model():
 async def start_client(session_id, url):
     api_key = os.getenv('AUTH_API_KEY')
     llm_model = select_model()
-    uri = f"ws://{url}/ws/{session_id}?api_key={api_key}&llm_model={llm_model}"
+    uri = f"ws://{url}/ws/{session_id}?api_key=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&llm_model={llm_model}"
     async with websockets.connect(uri) as websocket:
         # send client platform info
         await websocket.send('terminal')
