@@ -27,17 +27,6 @@ greenAPI = API.GreenApi(idInstance, apiTokenInstance)
 # load environment variables
 load_dotenv()
 
-#async def last_message():
-#    async with aiohttp.ClientSession() as session:
-#        url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
-#        async with session.get(url) as response:
-#            data = await response.json()
-#            by_phone = data[0]["sendByApi"]
-#            response_txt_last = data[0]['textMessage']
-#            response_txt_2last = data[1]['textMessage']
-#            if by_phone==False and response_txt_last != response_txt_2last:
-#                return True
-
 def is_last_message(last_time):
     url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
     
@@ -64,8 +53,6 @@ async def handle_text(websocket):
         url = f"https://api.green-api.com/waInstance{idInstance}/lastOutgoingMessages/{apiTokenInstance}"
         response = requests.request("GET", url, headers={}, data = {})
         response_txt = response.json()[0]['textMessage']
-
-        print(response_txt)
 
         await websocket.send(response_txt)
         print("sent to websocket")
@@ -109,9 +96,9 @@ async def receive_message(websocket):
         print("continue receiving")
 
 async def start_client(session_id, url):
-    api_key = os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv('AUTH_API_KEY')
     llm_model = 'gpt-3.5-turbo-16k'  # Set the language model to gpt-3.5-turbo-16k
-    uri = f"ws://{url}/ws/{session_id}?api_key=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&llm_model={llm_model}"
+    uri = f"ws://{url}/ws/{session_id}?api_key={api_key}&llm_model={llm_model}"
     async with websockets.connect(uri) as websocket:
         # send client platform info
         await websocket.send('terminal')
@@ -139,5 +126,6 @@ async def main(url):
         print("Client stopped by user")
 
 if __name__ == "__main__":
-    url = 'localhost:8000'
+
+    url = sys.argv[1] if len(sys.argv) > 1 else 'localhost:8000'
     asyncio.run(main(url))
